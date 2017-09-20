@@ -1,4 +1,5 @@
 export 'src/indexed_set.dart';
+export 'src/unmodifiable_set_view.dart';
 
 /// Thrown by [IndexedSet.add] when an element is added to the set that has the
 /// same index as a preexisting element, but is not equal to it.
