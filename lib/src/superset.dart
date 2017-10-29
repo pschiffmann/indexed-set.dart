@@ -35,12 +35,6 @@ class Superset<E> extends IterableBase<E>
   /// [hashCode] is computed lazy, and cached here.
   int _hashCode;
 
-  @override
-  Iterator<E> get iterator => _elements.iterator;
-
-  @override
-  int get length => _elements.length;
-
   /// Creates a Superset with the elements from `iterable` and the default
   /// `compare` and `isValidElement` functions.
   factory Superset([Iterable<E> iterable = const []]) =>
@@ -51,7 +45,9 @@ class Superset<E> extends IterableBase<E>
   Superset._withOrderedElements(
       this._compare, this._isValidElement, this._elements);
 
-  // From IndexedSet
+  /*
+   * From IndexedSet
+   */
 
   /// As [IndexedSet.containsKey].
   bool containsKey(int index) => 0 <= index && index < _elements.length;
@@ -67,13 +63,32 @@ class Superset<E> extends IterableBase<E>
   /// As [IndexedSet.operator[]].
   E operator [](int index) => containsKey(index) ? _elements[index] : null;
 
-  // From Iterable
+  /*
+   * From Iterable
+   */
+
+  @override
+  E get first => _elements.first;
+
+  @override
+  bool get isEmpty => _elements.isEmpty;
+
+  @override
+  Iterator<E> get iterator => _elements.iterator;
+
+  @override
+  E get last => _elements.last;
+
+  @override
+  int get length => _elements.length;
 
   /// Alias of [operator[]].
   @override
   E elementAt(int index) => this[index];
 
-  // From BuiltSet
+  /*
+   * From BuiltSet
+   */
 
   /// As [BuiltSet.asSet].
   @override
@@ -126,7 +141,9 @@ class Superset<E> extends IterableBase<E>
   @override
   Superset<E> union(Superset<E> other) => (toBuilder()..addAll(other)).build();
 
-  // From Built
+  /*
+   * From Built
+   */
 
   /// As [BuiltSet.rebuild].
   @override
@@ -192,7 +209,9 @@ class SupersetBuilder<E>
           'for example "new SupersetBuilder<String>"');
   }
 
-  // From Builder
+  /*
+   * From Builder
+   */
 
   @override
   Superset<E> build() {
@@ -222,7 +241,9 @@ class SupersetBuilder<E>
   @override
   void update(void Function(SupersetBuilder<E>) updates) => updates(this);
 
-  // From SetBuilder
+  /*
+   * From SetBuilder
+   */
 
   /// As [SetBuilder.add].
   @override
@@ -325,5 +346,5 @@ class _UnmodifiableSupersetView<E> extends Subset<E> {
 
   _UnmodifiableSupersetView(this._superset) : super(_superset);
 
-  int Function(E) get index => _superset.index;
+  int index(E element) => _superset.index(element);
 }

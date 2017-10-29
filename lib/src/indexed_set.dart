@@ -1,4 +1,4 @@
-import 'dart:collection';
+import 'dart:collection' show HashMap, SetMixin;
 import 'package:indexed_set/indexed_set.dart' show DuplicateIndexException;
 
 /// An implementation of [Set] that computes an [index] for each of its
@@ -49,9 +49,9 @@ import 'package:indexed_set/indexed_set.dart' show DuplicateIndexException;
 /// This implementation internally uses a [Map] to store key/value pairs, which
 /// defaults to an unordered [HashMap]. The [IndexedSet.using] constructor lets
 /// you use another map, for example if you want to change iteration order.
-class IndexedSet<I, E> extends SetMixin<E> implements Set<E> {
+class IndexedSet<I, E> extends SetMixin<E> {
   /// Computes the index of a (potential) element.
-  final I Function(E) index;
+  final I Function(E) _index;
 
   /// Determines equality of instances of E.
   final bool Function(E, E) _equals;
@@ -93,12 +93,13 @@ class IndexedSet<I, E> extends SetMixin<E> implements Set<E> {
   ///
   /// Throws an [ArgumentError] if the call to `values` returns a non-empty map.
   IndexedSet.using(
-    this.index,
+    I Function(E) index,
     Map<I, E> Function() base, {
     bool areElementsEqual(E e1, E e2),
     bool isValidElement(Object potentialKey),
   })
-      : _equals = areElementsEqual ?? identical,
+      : _index = index,
+        _equals = areElementsEqual ?? identical,
         _isValidElement = isValidElement ?? ((Object o) => o is E),
         _values = base(),
         _valuesConstructor = base {
@@ -147,6 +148,9 @@ class IndexedSet<I, E> extends SetMixin<E> implements Set<E> {
 
   @override
   void clear() => _values.clear();
+
+  /// Computes the index of a (potential) element.
+  I index(E element) => _index(element);
 
   @override
   E lookup(Object value) {

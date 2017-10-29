@@ -1,4 +1,6 @@
 export 'src/indexed_set.dart';
+export 'src/subset.dart';
+export 'src/superset.dart';
 export 'src/unmodifiable_set_view.dart';
 
 /// Thrown by [IndexedSet.add] when an element is added to the set that has the

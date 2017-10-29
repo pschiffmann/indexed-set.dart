@@ -12,7 +12,7 @@ class UnmodifiableIndexedSetView<I, E> extends UnmodifiableSetView<E>
   final IndexedSet<I, E> _base;
 
   @override
-  I Function(E) get index => _base.index;
+  I index(E element) => _base.index(element);
 
   UnmodifiableIndexedSetView(IndexedSet<I, E> setBase)
       : _base = setBase,
