@@ -91,7 +91,7 @@ class IndexedSet<I, E> extends SetMixin<E> {
   /// a [LinkedHashMap] constructor to iterate over elements in insertion order.
   /// If you need a custom `areIndexesEqual`, pass it directly to the map.
   ///
-  /// Throws an [ArgumentError] if the call to `values` returns a non-empty map.
+  /// Throws an [ArgumentError] if the call to `base` returns a non-empty map.
   IndexedSet.using(
     I Function(E) index,
     Map<I, E> Function() base, {
@@ -105,7 +105,7 @@ class IndexedSet<I, E> extends SetMixin<E> {
         _valuesConstructor = base {
     if (_values.isNotEmpty)
       throw new ArgumentError.value(
-          _values, 'values', 'The returned map must be empty');
+          base, 'base', 'The returned map must be empty');
   }
 
   /// Returns the element referenced by _index_, or null if no such element

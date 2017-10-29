@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 import 'package:indexed_set/indexed_set.dart';
 
 void main() {
-  group("IndexedSet with default `equals`, `isValidElement` and `values`", () {
+  group("IndexedSet with default `equals`, `isValidElement` and `base`", () {
     group("with elements [10, 20, 15]:", () {
       IndexedSet<String, num> s;
       setUp(() => s = new IndexedSet<String, num>((num n) => n.toString())
