@@ -147,7 +147,7 @@ class Superset<E> extends IterableBase<E>
 
   /// As [BuiltSet.rebuild].
   @override
-  Superset<E> rebuild(void Function(SupersetBuilder<E>) updates) =>
+  Superset<E> rebuild(void updates(SupersetBuilder<E> builder)) =>
       (toBuilder()..update(updates)).build();
 
   /// As [BuiltSet.toBuilder].
@@ -239,7 +239,7 @@ class SupersetBuilder<E>
   }
 
   @override
-  void update(void Function(SupersetBuilder<E>) updates) => updates(this);
+  void update(void updates(SupersetBuilder<E> b)) => updates(this);
 
   /*
    * From SetBuilder
@@ -277,11 +277,11 @@ class SupersetBuilder<E>
 
   /// As [SetBuilder.expand].
   @override
-  void expand(Iterable<E> Function(E) f) => replace(_elements.expand(f));
+  void expand(Iterable<E> Function(E) f) => replace(_elements.expand<E>(f));
 
   /// As [SetBuilder.map].
   @override
-  void map(E Function(E) f) => replace(_elements.map(f));
+  void map(E Function(E) f) => replace(_elements.map<E>(f));
 
   /// As [SetBuilder.remove].
   @override
@@ -296,11 +296,7 @@ class SupersetBuilder<E>
 
   /// As [SetBuilder.removeWhere].
   @override
-  void removeWhere(bool Function(E) f) {
-    final lengthBefore = _elements.length;
-    _elements.removeWhere(f);
-    if (_elements.length != lengthBefore) _markAsModified();
-  }
+  void removeWhere(bool Function(E) f) => retainWhere((E el) => !f(el));
 
   /// As [SetBuilder.retainAll].
   @override
