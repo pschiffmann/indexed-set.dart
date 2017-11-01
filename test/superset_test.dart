@@ -328,5 +328,9 @@ void main() {
   group("_UnmodifiableSupersetView", () {
     final Superset<String> s = new Superset<String>(["a", "b", "c", "d"]);
     final Set<String> view = s.asSet();
+
+    test("contains the same elements as its superset", () {
+      expect(view, orderedEquals(s));
+    });
   });
 }

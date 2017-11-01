@@ -1,9 +1,11 @@
-import 'dart:collection' show IterableBase, SplayTreeSet;
+import 'dart:collection' show IterableBase, SplayTreeSet, SetMixin;
 import 'package:built_collection/built_collection.dart'
     show BuiltList, BuiltSet, SetBuilder;
 import 'package:built_collection/src/iterable.dart';
 import 'package:built_value/built_value.dart' show Builder, Built;
 import 'package:collection/collection.dart' show binarySearch;
+import 'package:collection/src/unmodifiable_wrappers.dart'
+    show UnmodifiableSetMixin;
 import 'package:quiver/core.dart' show hash4, hashObjects;
 import 'indexed_set.dart';
 import 'subset.dart';
@@ -101,7 +103,7 @@ class Superset<E> extends IterableBase<E>
 
   /// As [BuiltSet.asSet].
   @override
-  Set<E> asSet() => new _UnmodifiableSupersetView(this);
+  IndexedSet<int, E> asSet() => new _UnmodifiableSupersetView(this);
 
   /// As [BuiltSet.contains].
   @override
@@ -362,10 +364,36 @@ class SupersetBuilder<E>
   void _markAsModified() => _lastBuilt = null;
 }
 
-class _UnmodifiableSupersetView<E> extends Subset<E> {
+/// An unmodifiable view of a [Superset] for [Superset.asSet].
+class _UnmodifiableSupersetView<E> extends SetMixin<E>
+    with UnmodifiableSetMixin<E>
+    implements IndexedSet<int, E> {
+  /// All method calls are delegated to this object.
   final Superset<E> _superset;
 
-  _UnmodifiableSupersetView(this._superset) : super(_superset);
+  @override
+  Iterator<E> get iterator => _superset.iterator;
 
+  @override
+  int get length => _superset.length;
+
+  _UnmodifiableSupersetView(this._superset);
+
+  @override
+  bool containsKey(int i) => _superset.containsKey(i);
+
+  @override
+  bool contains(Object object) => _superset.contains(object);
+
+  @override
   int index(E element) => _superset.index(element);
+
+  @override
+  E lookup(Object object) => _superset.lookup(object);
+
+  @override
+  Set<E> toSet() => new _UnmodifiableSupersetView<E>(_superset);
+
+  @override
+  E operator [](int i) => _superset[i];
 }
