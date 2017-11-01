@@ -26,8 +26,16 @@ class Superset<E> extends IterableBase<E>
         Built<Superset<E>, SupersetBuilder<E>>,
         BuiltIterable<E>,
         BuiltSet<E> {
+  /// Used to look up objects in [_elements].
   final Comparator<E> _compare;
+
+  /// User-provided callback. Should not be called directly, use [_checkElement]
+  /// instead.
   final bool Function(Object) _isValidElement;
+
+  /// Calls [_isValidElement], or uses an `is E` check as fallback.
+  bool _checkElement(Object o) =>
+      _isValidElement != null ? _isValidElement(o) : o is E;
 
   /// The elements of this set, ordered according to [_compare].
   final List<E> _elements;
@@ -56,12 +64,13 @@ class Superset<E> extends IterableBase<E>
   ///
   /// Otherwise, returns `-1`.
   int index(E element) {
-    if (!_isValidElement(element)) return -1;
+    if (!_checkElement(element)) return -1;
     return binarySearch(_elements, element, compare: _compare);
   }
 
   /// As [IndexedSet.operator[]].
-  E operator [](int index) => containsKey(index) ? _elements[index] : null;
+  E operator [](int index) =>
+      index != null && containsKey(index) ? _elements[index] : null;
 
   /*
    * From Iterable
@@ -105,13 +114,13 @@ class Superset<E> extends IterableBase<E>
   @override
   bool containsAll(Iterable<E> elements) => elements.every(contains);
 
-  /// As [BuiltSet.difference].
+  /// As [BuiltSet.difference]. Uses `compare` and `isValidElement` of this.
   @override
   Superset<E> difference(Superset<Object> other) =>
       new Superset<E>._withOrderedElements(_compare, _isValidElement,
           new List.unmodifiable(_elements.where((el) => !other.contains(el))));
 
-  /// As [BuiltSet.intersection].
+  /// As [BuiltSet.intersection]. Uses `compare` and `isValidElement` of this.
   @override
   Superset<E> intersection(Superset<Object> other) =>
       new Superset<E>._withOrderedElements(_compare, _isValidElement,
@@ -134,7 +143,7 @@ class Superset<E> extends IterableBase<E>
   @override
   BuiltSet<E> toBuiltSet() => new BuiltSet<E>(this);
 
-  /// As [BuiltSet.union].
+  /// As [BuiltSet.union]. Uses `compare` and `isValidElement` of this.
   ///
   /// Throws an [ArgumentError] if `other` contains an element that gets
   /// rejected by `isValidElement` of this set.
@@ -152,7 +161,9 @@ class Superset<E> extends IterableBase<E>
 
   /// As [BuiltSet.toBuilder].
   @override
-  SupersetBuilder<E> toBuilder() => new SupersetBuilder();
+  SupersetBuilder<E> toBuilder() =>
+      new SupersetBuilder<E>(compare: _compare, isValidElement: _isValidElement)
+        ..replace(this);
 
   // Equality and hashCode
 
@@ -187,8 +198,16 @@ class Superset<E> extends IterableBase<E>
 /// rejects all objects that are not `E` instances.
 class SupersetBuilder<E>
     implements Builder<Superset<E>, SupersetBuilder<E>>, SetBuilder<E> {
+  /// Used to sort [_elements].
   final Comparator<E> _compare;
+
+  /// Optional callback. Should not be called directly, use [_checkElement]
+  /// instead.
   final bool Function(Object) _isValidElement;
+
+  /// Calls [_isValidElement], or uses an `is E` check as fallback.
+  bool _checkElement(Object o) =>
+      _isValidElement != null ? _isValidElement(o) : o is E;
 
   /// The current elements of this builder, ordered according to [_compare].
   SplayTreeSet<E> _elements;
@@ -199,11 +218,9 @@ class SupersetBuilder<E>
 
   SupersetBuilder(
       {Comparator<E> compare, bool isValidElement(Object potentialKey)})
-      : this._(
-            compare ?? Comparable.compare, isValidElement ?? ((o) => o is E));
-
-  SupersetBuilder._(this._compare, this._isValidElement)
-      : _elements = new SplayTreeSet<E>(_compare, _isValidElement) {
+      : _compare = compare ?? Comparable.compare,
+        _isValidElement = isValidElement,
+        _elements = new SplayTreeSet<E>(compare ?? Comparable.compare) {
     if (E == dynamic)
       throw new UnsupportedError('explicit element type required, '
           'for example "new SupersetBuilder<String>"');
@@ -225,10 +242,18 @@ class SupersetBuilder<E>
   /// As [SetBuilder.replace].
   @override
   void replace(Iterable<Object> iterable) {
-    final elements = new SplayTreeSet<E>(_compare, _isValidElement);
+    if (iterable is Superset<E>) {
+      _elements
+        ..clear()
+        ..addAll(iterable);
+      _lastBuilt = iterable;
+      return;
+    }
+
+    final elements = new SplayTreeSet<E>(_compare);
     var count = 0;
     for (final el in iterable) {
-      if (!_isValidElement(el))
+      if (!_checkElement(el))
         throw new ArgumentError.value(iterable, 'iterable',
             'element $count rejected by `isValidElement`');
       count++;
@@ -248,7 +273,7 @@ class SupersetBuilder<E>
   /// As [SetBuilder.add].
   @override
   void add(E element) {
-    if (!_isValidElement(element))
+    if (!_checkElement(element))
       throw new ArgumentError.value(element, 'rejected by `isValidElement`');
     _elements.add(element);
     _markAsModified();
@@ -259,7 +284,7 @@ class SupersetBuilder<E>
   void addAll(Iterable<E> elements) {
     var count = 0;
     for (final el in elements) {
-      if (!_isValidElement(el))
+      if (!_checkElement(el))
         throw new ArgumentError.value(elements, 'iterable',
             'element $count rejected by `isValidElement`');
       count++;
@@ -286,7 +311,7 @@ class SupersetBuilder<E>
   /// As [SetBuilder.remove].
   @override
   void remove(Object object) {
-    if (!_isValidElement(object)) return;
+    if (!_checkElement(object)) return;
     if (_elements.remove(object)) _markAsModified();
   }
 

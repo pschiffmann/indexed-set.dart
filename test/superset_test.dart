@@ -36,6 +36,15 @@ void main() {
             throwsArgumentError);
         expect(builder.build(), orderedEquals(["a"]));
       });
+
+      test("reuses a parameter of type Superset", () {
+        builder.add("a");
+        final s = builder.build();
+        builder
+          ..clear()
+          ..replace(s);
+        expect(builder.build(), same(s));
+      });
     });
 
     group("add()", () {
@@ -193,5 +202,131 @@ void main() {
         ..takeWhile((s) => s.length == 1);
       expect(builder.build(), orderedEquals(["a", "b"]));
     });
+  });
+
+  group("Superset with default `compare` and `isValidElement`:", () {
+    Superset<String> s;
+
+    setUp(() => s = new Superset<String>(["a", "b", "c", "d"]));
+
+    test("containsKey() returns true for ints in range 0..length-1", () {
+      expect(s.containsKey(-1), isFalse);
+      expect(s.containsKey(0), isTrue);
+      expect(s.containsKey(3), isTrue);
+      expect(s.containsKey(4), isFalse);
+    });
+
+    group("index()", () {
+      test("returns the correct index for elements of the set", () {
+        expect(s.index("a"), equals(0));
+        expect(s.index("d"), equals(3));
+      });
+
+      test("returns -1 for objects not in the set", () {
+        expect(s.index("z"), equals(-1));
+      });
+
+      test("returns -1 for null", () {
+        expect(s.index(null), equals(-1));
+      });
+    });
+
+    group("operator[]", () {
+      test("returns the element for valid indexes", () {
+        expect(s[0], equals("a"));
+      });
+
+      test("returns null for out-of-range indexes", () {
+        expect(s[-1], isNull);
+        expect(s[4], isNull);
+      });
+
+      test("returns null for null parameter", () {
+        expect(s[null], isNull);
+      });
+    });
+
+    group("contains()", () {
+      test("returns true for elements of the set", () {
+        expect(s.contains("a"), isTrue);
+      });
+
+      test("returns false for objects not in the set", () {
+        expect(s.contains("z"), isFalse);
+      });
+
+      test("returns false for objects of the wrong type", () {
+        expect(s.contains(4), isFalse);
+        expect(s.contains(null), isFalse);
+      });
+    });
+
+    test(
+        "difference() returns new superset containing only elements from "
+        "this that are not in other", () {
+      expect(s.difference(new Superset<String>(["a", "c", "z"])),
+          orderedEquals(["b", "d"]));
+    });
+
+    test(
+        "intersection() returns new superset containing all elements from "
+        "this that are also in other", () {
+      expect(s.intersection(new Superset<String>(["a", "c", "z"])),
+          orderedEquals(["a", "c"]));
+    });
+
+    group("lookup()", () {
+      test("finds elements that are in the set", () {
+        expect(s.lookup("a"), equals("a"));
+      });
+
+      test("returns null for objects not in the set", () {
+        expect(s.lookup(4), isNull);
+        expect(s.lookup(null), isNull);
+      });
+    });
+
+    test(
+        "union() returns new superset "
+        "containing all elements from this and other", () {
+      expect(s.union(new Superset<String>(["a", "z"])),
+          orderedEquals(["a", "b", "c", "d", "z"]));
+    });
+
+    test("hashCode is the same for structurally equal supersets", () {
+      final s2 = new Superset<String>(["a", "b", "c", "d"]);
+      expect(s.hashCode, equals(s2.hashCode));
+    });
+
+    group("operator==", () {
+      test("returns true for structurally equal sets", () {
+        final s2 = new Superset<String>(["a", "b", "c", "d"]);
+        expect(s == s2, isTrue);
+      });
+
+      test("returns false for sets with different compare", () {
+        final s2 = new SupersetBuilder<String>(
+            compare: (e1, e2) => e1.length - e2.length)
+          ..addAll(["a", "b", "c", "d"]);
+        expect(s == s2, isFalse);
+      });
+
+      test("returns false for sets with different isValidElement", () {
+        final s2 =
+            new SupersetBuilder<String>(isValidElement: (e) => e.length == 1)
+              ..addAll(["a", "b", "c", "d"]);
+        expect(s == s2, isFalse);
+      });
+
+      test("returns false for sets with different elements", () {
+        final s2 = new Superset<String>(["a", "b", "c", "z"]);
+        expect(s == s2, isFalse);
+      });
+    });
+  });
+
+  group("_UnmodifiableSupersetView", () {
+    final Superset<String> s = new Superset<String>(["a", "b", "c", "d"]);
+    final Set<String> view = s.asSet();
   });
 }
