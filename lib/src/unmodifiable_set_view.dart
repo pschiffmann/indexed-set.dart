@@ -4,9 +4,10 @@ import 'indexed_set.dart';
 
 /// An unmodifiable set.
 ///
-/// An UnmodifiableSetView contains a [Set] object and ensures that it does not
-/// change. Methods that would change the set, such as [add] and [remove], throw
-/// an [UnsupportedError]. Permitted operations defer to the wrapped set.
+/// An UnmodifiableIndexedSetView contains an [IndexedSet] object and ensures
+/// that it does not change. Methods that would change the set, such as [add]
+/// and [remove], throw an [UnsupportedError]. Permitted operations defer to the
+/// wrapped set.
 class UnmodifiableIndexedSetView<I, E> extends UnmodifiableSetView<E>
     implements IndexedSet<I, E> {
   final IndexedSet<I, E> _base;
