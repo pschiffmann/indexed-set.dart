@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'empty_unmodifiable_set.dart';
+import 'package:collection/src/empty_unmodifiable_set.dart';
 import 'indexed_set.dart';
 
 /// An unmodifiable set.
@@ -26,4 +26,19 @@ class UnmodifiableIndexedSetView<I, E> extends UnmodifiableSetView<E>
 
   @override
   bool containsKey(I index) => _base.containsKey(index);
+}
+
+// ignore: non_abstract_class_inherits_abstract_member_one
+class EmptyIndexedSet<I, E> extends EmptyUnmodifiableSet<E>
+    implements UnmodifiableIndexedSetView<I, E> {
+  final I Function(E) _index;
+
+  const EmptyIndexedSet(this._index);
+
+  @override
+  E operator [](I index) => null;
+  @override
+  I index(E element) => _index(element);
+  @override
+  bool containsKey(I index) => false;
 }
