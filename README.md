@@ -1,7 +1,15 @@
 Dart indexed set
 ================
 
-Provides an `IndexedSet` class, an implementation of `Set` that computes an index for each of its elements, and exposes this mapping through the `[]` operator.
+This package provides an `IndexedSet` class, and a pair of `Superset`/`Subset` classes that implement the `IndexedSet` interface.
+
+IndexedSet
+----------
+
+An `IndexedSet` adds a mapping mechanism to the `Set` interface.
+A user-provided function `I index(E element)` calculates an index for each element.
+The elements are then accessible through the `[]` operator.
+This allows you to define cleaner APIs than if you used a `Map`, because the data structure can enforce integrity of the key/value mapping.
 
 ```dart
 enum System { frontend, backend }
@@ -23,7 +31,15 @@ void main() {
       isValidElement: (value) =>
           value is Account && value.system == System.frontend);
 
-  frontendAccounts.add(new Account('bob', System.frontend));
-  print(frontendAccounts['bob']); // System.frontend-account of bob
+  frontendAccounts.add(new Account('pschiffmann', System.frontend));
+  print(frontendAccounts['pschiffmann']);
 }
 ```
+
+Superset / Subset
+-----------------
+
+Both `Superset` and `Subset` are indexed sets that use `int` as the index type.
+Supersets are immutable and store their elements in ascending order -- the first element will have index `0`, the last element index `set.length - 1`.
+Subsets have to be taken from a superset, and can only contain elements that are also contained in the superset.
+This allows the subsets to store their elements in a bit vector, which is both very space-efficient, and time-efficient for set operations (difference, intersection, union) on subsets of the same superset.
