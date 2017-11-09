@@ -94,11 +94,10 @@ void main() {
       group("toSet", () {
         test("contains the same elements",
             () => expect(s.toSet(), unorderedEquals(s)));
-        test("returns set with same behaviour", () {
-          final s2 = s.toSet();
-          expect(s2, const isInstanceOf<IndexedSet<String, num>>());
-          expect(s2.index, equals(s.index));
-        });
+        test(
+            "returns set with same behaviour",
+            () => expect(
+                s.toSet(), const isInstanceOf<IndexedSet<String, num>>()));
       });
     });
   });
