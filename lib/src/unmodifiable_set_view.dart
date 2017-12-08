@@ -20,13 +20,17 @@ class UnmodifiableIndexedSetView<I, E> extends UnmodifiableSetView<E>
         super(setBase);
 
   const factory UnmodifiableIndexedSetView.empty(I Function(E) index) =
-      EmptyIndexedSet;
+      EmptyIndexedSet<I, E>;
 
   @override
   E operator [](I index) => _base[index];
 
   @override
   bool containsKey(I index) => _base.containsKey(index);
+
+  /// Returns `this`.
+  @override
+  IndexedSet<I, E> toSet() => this;
 }
 
 // ignore: non_abstract_class_inherits_abstract_member_one
@@ -42,4 +46,6 @@ class EmptyIndexedSet<I, E> extends EmptyUnmodifiableSet<E>
   I index(E element) => _index(element);
   @override
   bool containsKey(I index) => false;
+  @override
+  IndexedSet<I, E> toSet() => this;
 }
