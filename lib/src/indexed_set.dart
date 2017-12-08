@@ -142,7 +142,7 @@ class IndexedSet<I, E> extends SetMixin<E> {
       final i = index(value);
       if (!_values.containsKey(i)) return null;
       final element = _values[i];
-      return _elementsEqual(value, element) ? element : null;
+      if (_elementsEqual(value, element)) return element;
     }
     return null;
   }
@@ -151,10 +151,10 @@ class IndexedSet<I, E> extends SetMixin<E> {
   bool remove(Object element) {
     if (element is E && _validElement(element)) {
       final i = index(element);
-      if (!_values.containsKey(i) || !_elementsEqual(element, _values[i]))
-        return false;
-      _values.remove(i);
-      return true;
+      if (_values.containsKey(i) && _elementsEqual(element, _values[i])) {
+        _values.remove(i);
+        return true;
+      }
     }
     return false;
   }
