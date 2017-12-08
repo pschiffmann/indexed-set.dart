@@ -3,14 +3,16 @@ import 'package:test/test.dart';
 import 'package:indexed_set/indexed_set.dart';
 
 void main() {
-  group("IndexedSet with default `equals`, `isValidElement` and `base`", () {
+  group(
+      "IndexedSet with default `areElementsEqual`, `isValidElement` and `base`",
+      () {
     group("with elements [10, 20, 15]:", () {
       IndexedSet<String, num> s;
       setUp(() => s = new IndexedSet<String, num>((num n) => n.toString())
         ..addAll([10, 20, 15]));
 
       test("iterator contains all elements",
-          () => expect(s, unorderedEquals([10, 20, 15])));
+          () => expect(s, unorderedEquals(<int>[10, 20, 15])));
 
       test("length is correct", () {
         expect(s.length, equals(3));
@@ -49,6 +51,8 @@ void main() {
         });
         test("fails for missings elements",
             () => expect(s.contains(3), isFalse));
+        test("fails for objects of the wrong type",
+            () => expect(s.contains("10"), isFalse));
       });
 
       group("containsKey", () {
@@ -87,7 +91,7 @@ void main() {
           expect(s.remove(20), isTrue);
           expect(s.remove(15), isTrue);
         });
-        test("returns null for missing elements",
+        test("returns false for missing elements",
             () => expect(s.remove(3), isFalse));
       });
 
@@ -103,23 +107,17 @@ void main() {
   });
 
   group("IndexedSet with partially defined and colliding `index`:", () {
-    final exc = new ArgumentError("dummy exception");
     bool isValidElement(int n) => n < 100;
-    String index(int n) => isValidElement(n) ? (n % 2).toString() : throw exc;
+    String index(int n) => (n % 2).toString();
 
     IndexedSet<String, int> s;
     setUp(() =>
         s = new IndexedSet<String, int>(index, isValidElement: isValidElement));
 
-    group("add", () {
-      test("rejects duplicate indexes", () {
-        s.add(1);
-        expect(() => s.add(3),
-            throwsA(const isInstanceOf<DuplicateIndexException>()));
-      });
-      test("prefers custom exception from `index` over generic one", () {
-        expect(() => s.add(100), throwsA(exc));
-      });
+    test("add rejects duplicate indexes", () {
+      s.add(1);
+      expect(() => s.add(3),
+          throwsA(const isInstanceOf<DuplicateIndexException>()));
     });
 
     test("contains differentiates between objects with same index", () {
@@ -157,7 +155,7 @@ void main() {
 
     test("iterates over elements in ascending order", () {
       s..addAll([40, 5, 12, 3]);
-      expect(s, orderedEquals([3, 5, 12, 40]));
+      expect(s, orderedEquals(<int>[3, 5, 12, 40]));
     });
   });
 }

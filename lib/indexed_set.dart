@@ -1,3 +1,4 @@
+import 'src/indexed_set.dart';
 export 'src/indexed_set.dart';
 export 'src/subset.dart';
 export 'src/superset.dart';
