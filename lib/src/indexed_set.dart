@@ -122,9 +122,7 @@ class IndexedSet<I, E> extends SetMixin<E> {
 
   @override
   bool contains(Object value) =>
-      value is E &&
-      _validElement(value) &&
-      _elementsEqual(value, _values[index(value)]);
+      _validElement(value) && _elementsEqual(value, _values[index(value)]);
 
   /// Returns `true` if this set contains an element whose index is equal to the
   /// given value.
@@ -138,25 +136,21 @@ class IndexedSet<I, E> extends SetMixin<E> {
 
   @override
   E lookup(Object value) {
-    if (value is E && _validElement(value)) {
-      final i = index(value);
-      if (!_values.containsKey(i)) return null;
-      final element = _values[i];
-      if (_elementsEqual(value, element)) return element;
-    }
-    return null;
+    if (!_validElement(value)) return null;
+    final i = index(value);
+    if (!_values.containsKey(i)) return null;
+    final element = _values[i];
+    return _elementsEqual(value, element) ? element : null;
   }
 
   @override
   bool remove(Object element) {
-    if (element is E && _validElement(element)) {
-      final i = index(element);
-      if (_values.containsKey(i) && _elementsEqual(element, _values[i])) {
-        _values.remove(i);
-        return true;
-      }
-    }
-    return false;
+    if (!_validElement(element)) return false;
+    final i = index(element);
+    if (!_values.containsKey(i) || !_elementsEqual(element, _values[i]))
+      return false;
+    _values.remove(i);
+    return true;
   }
 
   @override
@@ -169,5 +163,6 @@ class IndexedSet<I, E> extends SetMixin<E> {
       _comparator != null ? _comparator(e1, e2) : e1 == e2;
 
   /// Returns true if `value` could possibly be in this set.
-  bool _validElement(E element) => _filter != null ? _filter(element) : true;
+  bool _validElement(Object element) =>
+      element is E && (_filter != null ? _filter(element) : true);
 }
