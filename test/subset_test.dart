@@ -143,23 +143,22 @@ void main() {
 
     group("addAll() adds all elements from the argument", () {
       test("List", () {
-        subset.addAll(vowels);
-        subset.addAll(first10);
+        subset..addAll(vowels)..addAll(first10);
         expect(subset, orderedEquals(union));
         expect(subset.length, equals(union.length));
       });
 
       test("Subset", () {
-        subset.addAll(vowels);
-        subset.addAll(new Subset(superset)..addAll(first10));
+        subset..addAll(vowels)..addAll(new Subset(superset)..addAll(first10));
         expect(subset, orderedEquals(union));
         expect(subset.length, equals(union.length));
       });
     });
 
     test("clear() removes all elements", () {
-      subset.addAll(vowels);
-      subset.clear();
+      subset
+        ..addAll(vowels)
+        ..clear();
       expect(subset.isEmpty, isTrue);
     });
 

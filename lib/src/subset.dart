@@ -1,5 +1,5 @@
-import 'dart:typed_data' show Uint8List;
 import 'dart:collection' show SetMixin;
+import 'dart:typed_data' show Uint8List;
 import 'indexed_set.dart';
 import 'superset.dart';
 
