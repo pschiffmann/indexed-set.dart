@@ -164,5 +164,5 @@ class IndexedSet<I, E> extends SetMixin<E> {
 
   /// Returns true if `value` could possibly be in this set.
   bool _validElement(Object element) =>
-      element is E && (_filter != null ? _filter(element) : true);
+      element is E && (_filter == null || _filter(element));
 }

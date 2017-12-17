@@ -1,12 +1,10 @@
 import 'dart:collection' show IterableBase, SplayTreeSet, SetMixin;
 import 'package:built_collection/built_collection.dart'
     show BuiltList, BuiltSet, SetBuilder;
-import 'package:built_collection/src/iterable.dart';
-import 'package:built_value/built_value.dart' show Builder, Built;
 import 'package:collection/collection.dart' show binarySearch;
 import 'package:collection/src/unmodifiable_wrappers.dart'
     show UnmodifiableSetMixin;
-import 'package:quiver/core.dart' show hash4, hashObjects;
+import 'package:quiver/core.dart' show hashObjects;
 import 'indexed_set.dart';
 import 'subset.dart';
 
@@ -23,37 +21,36 @@ import 'subset.dart';
 /// Iteration order is guaranteed to be in ascending order according to the
 /// comparator used. All methods use the provided comparator to determine object
 /// equality.
-class Superset<E> extends IterableBase<E>
-    implements
-        Built<Superset<E>, SupersetBuilder<E>>,
-        BuiltIterable<E>,
-        BuiltSet<E> {
+class Superset<E> extends IterableBase<E> implements BuiltSet<E> {
   /// Used to look up objects in [_elements].
-  final Comparator<E> _compare;
+  final Comparator<E> _comparator;
 
-  /// User-provided callback. Should not be called directly, use [_checkElement]
-  /// instead.
-  final bool Function(Object) _isValidElement;
+  /// As `IndexedSet._filter`.
+  final bool Function(E) _filter;
 
-  /// Calls [_isValidElement], or uses an `is E` check as fallback.
-  bool _checkElement(Object o) =>
-      _isValidElement != null ? _isValidElement(o) : o is E;
+  /// As `IndexedSet._validElement`.
+  bool _validElement(Object o) => o is E && (_filter == null || _filter(o));
 
-  /// The elements of this set, ordered according to [_compare].
+  /// The elements of this set, ordered according to [_comparator].
   final List<E> _elements;
 
   /// [hashCode] is computed lazy, and cached here.
   int _hashCode;
 
-  /// Creates a Superset with the elements from `iterable` and the default
-  /// `compare` and `isValidElement` functions.
+  /// Creates a Superset with the elements from `iterable` and
+  /// [Comparable.compare] as `comparator`.
   factory Superset([Iterable<E> iterable = const []]) =>
       (new SupersetBuilder<E>()..addAll(iterable)).build();
 
-  /// Assumes the `_elements` argument is ordered according to `_compare` and
+  /// As [BuiltSet.build].
+  factory Superset.build(void updates(SupersetBuilder<E> builder)) =>
+      (new SupersetBuilder<E>()..update(updates)).build();
+
+  /// Assumes the `_elements` argument is ordered according to `_comparator` and
   /// only contains elements allowed by `_isValidElement`.
   Superset._withOrderedElements(
-      this._compare, this._isValidElement, this._elements);
+      this._comparator, this._filter, Iterable<E> elements)
+      : _elements = new List<E>.unmodifiable(elements);
 
   /*
    * From IndexedSet
@@ -65,10 +62,9 @@ class Superset<E> extends IterableBase<E>
   /// Returns the index of `element`, if `element` is in this set.
   ///
   /// Otherwise, returns `-1`.
-  int index(E element) {
-    if (!_checkElement(element)) return -1;
-    return binarySearch(_elements, element, compare: _compare);
-  }
+  int index(E element) => _validElement(element)
+      ? binarySearch(_elements, element, compare: _comparator)
+      : -1;
 
   /// As [IndexedSet.operator[]].
   E operator [](int index) =>
@@ -93,9 +89,8 @@ class Superset<E> extends IterableBase<E>
   @override
   int get length => _elements.length;
 
-  /// Alias of [operator[]].
   @override
-  E elementAt(int index) => this[index];
+  E elementAt(int index) => _elements[index];
 
   /*
    * From BuiltSet
@@ -107,34 +102,31 @@ class Superset<E> extends IterableBase<E>
 
   /// As [BuiltSet.contains].
   @override
-  bool contains(Object element) {
-    if (element is! E) return false;
-    return index(element) != -1;
-  }
+  bool contains(Object element) => element is E && index(element) != -1;
 
   /// As [BuiltSet.containsAll].
   @override
-  bool containsAll(Iterable<E> elements) => elements.every(contains);
+  bool containsAll(Iterable<Object> elements) => elements.every(contains);
 
-  /// As [BuiltSet.difference]. Uses `compare` and `isValidElement` of this.
+  /// As [BuiltSet.difference]. Uses `comparator` and `isValidElement` of this.
   @override
-  Superset<E> difference(Superset<Object> other) =>
-      new Superset<E>._withOrderedElements(_compare, _isValidElement,
-          new List.unmodifiable(_elements.where((el) => !other.contains(el))));
+  Superset<E> difference(BuiltSet<Object> other) =>
+      new Superset<E>._withOrderedElements(
+          _comparator, _filter, _elements.where((el) => !other.contains(el)));
 
-  /// As [BuiltSet.intersection]. Uses `compare` and `isValidElement` of this.
+  /// As [BuiltSet.intersection]. Uses `comparator` and `isValidElement` of
+  /// this.
   @override
-  Superset<E> intersection(Superset<Object> other) =>
-      new Superset<E>._withOrderedElements(_compare, _isValidElement,
-          new List.unmodifiable(_elements.where((el) => other.contains(el))));
+  Superset<E> intersection(BuiltSet<Object> other) =>
+      new Superset<E>._withOrderedElements(
+          _comparator, _filter, _elements.where((el) => other.contains(el)));
 
   /// As [BuiltSet.lookup].
   @override
   E lookup(Object object) {
     if (object is! E) return null;
     final i = index(object);
-    if (i == -1) return null;
-    return _elements[i];
+    return i != -1 ? _elements[i] : null;
   }
 
   /// As [BuiltSet.toBuiltList].
@@ -143,14 +135,20 @@ class Superset<E> extends IterableBase<E>
 
   /// As [BuiltSet.toBuiltSet].
   @override
-  BuiltSet<E> toBuiltSet() => new BuiltSet<E>(this);
+  BuiltSet<E> toBuiltSet() => this;
 
-  /// As [BuiltSet.union]. Uses `compare` and `isValidElement` of this.
+  /// Returns a [SplayTreeSet] with the same elements, comparator and filter as
+  /// this set.
+  @override
+  SplayTreeSet<E> toSet() =>
+      new SplayTreeSet<E>(_comparator, _filter)..addAll(_elements);
+
+  /// As [BuiltSet.union]. Uses `comparator` and `isValidElement` of this.
   ///
   /// Throws an [ArgumentError] if `other` contains an element that gets
   /// rejected by `isValidElement` of this set.
   @override
-  Superset<E> union(Superset<E> other) => (toBuilder()..addAll(other)).build();
+  Superset<E> union(BuiltSet<E> other) => (toBuilder()..addAll(other)).build();
 
   /*
    * From Built
@@ -164,65 +162,75 @@ class Superset<E> extends IterableBase<E>
   /// As [BuiltSet.toBuilder].
   @override
   SupersetBuilder<E> toBuilder() =>
-      new SupersetBuilder<E>(compare: _compare, isValidElement: _isValidElement)
-        ..replace(this);
+      new SupersetBuilder<E>(_comparator, _filter)..replace(this);
 
-  // Equality and hashCode
+  /*
+   * Equality and hashCode
+   */
 
   /// As [BuiltSet.hashCode].
   @override
-  int get hashCode => _hashCode ??=
-      hash4(index, _compare, _isValidElement, hashObjects(_elements));
+  int get hashCode => _hashCode ??= hashObjects(
+      _elements.map((e) => e.hashCode).toList(growable: false)..sort());
 
   /// As [BuiltSet.operator==].
   @override
   bool operator ==(dynamic other) {
     if (identical(other, this)) return true;
-    if (other is! Superset ||
-        other._elementType != _elementType ||
-        other._isValidElement != _isValidElement ||
-        other._compare != _compare ||
-        other.length != length ||
-        other.hashCode != hashCode) return false;
-
+    if (other is! BuiltSet) return false;
+    if (other.length != length) return false;
+    if (other.hashCode != hashCode) return false;
     return containsAll(other);
   }
 
-  Type get _elementType => E;
+  @override
+  String toString() => IterableBase.iterableToShortString(this, '{', '}');
 }
 
 /// [Builder class]((https://pub.dartlang.org/packages/built_collection)) for
-/// [Superset]. Implements the [SetBuilder] interface.
-///
-/// `compare` and `isValidElement` have to be provided when instantiating the
-/// builder. The default comparator is [Comparable.compare], which will fail at
-/// runtime if `E` does not implement [Comparable]. The default `isValidElement`
-/// rejects all objects that are not `E` instances.
-class SupersetBuilder<E>
-    implements Builder<Superset<E>, SupersetBuilder<E>>, SetBuilder<E> {
+/// [Superset].
+class SupersetBuilder<E> implements SetBuilder<E> {
   /// Used to sort [_elements].
-  final Comparator<E> _compare;
+  Comparator<E> _comparator;
 
-  /// Optional callback. Should not be called directly, use [_checkElement]
-  /// instead.
-  final bool Function(Object) _isValidElement;
+  /// As `IndexedSet._filter`.
+  bool Function(E) _filter;
 
-  /// Calls [_isValidElement], or uses an `is E` check as fallback.
-  bool _checkElement(Object o) =>
-      _isValidElement != null ? _isValidElement(o) : o is E;
-
-  /// The current elements of this builder, ordered according to [_compare].
+  /// The current elements of this builder, ordered according to [_comparator].
   SplayTreeSet<E> _elements;
+
+  /// If [E] is not [Comparable] and [withComparator] was never called on this
+  /// builder, it is not initialized; all methods except [withComparator] will
+  /// throw a [StateError] (through [_assertInitialized]).
+  bool get _initialized => _comparator != null;
 
   /// If [build] is called several times without changes to the builder, the
   /// same superset can be reused; it is cached here.
   Superset<E> _lastBuilt;
 
-  SupersetBuilder(
-      {Comparator<E> compare, bool isValidElement(Object potentialKey)})
-      : _compare = compare ?? Comparable.compare,
-        _isValidElement = isValidElement,
-        _elements = new SplayTreeSet<E>(compare ?? Comparable.compare) {
+  /// The elements of this builder (and its built supersets) are ordered
+  /// according to [comparator].
+  ///
+  /// If [comparator] is not provided and [E] is [Comparable], then
+  /// [Comparable.compare] will be used. Otherwise, it has to be set via
+  /// [withComparator], and all other methods will throw a [StateError] until
+  /// a comparator is provided.
+  ///
+  /// Only objects for which [isValidElement] returns `true` will be passed to
+  /// [comparator]. This can be used if [comparator] does not work on all
+  /// objects.
+  factory SupersetBuilder(
+      [Comparator<E> comparator, bool isValidElement(E element)]) {
+    final result = new SupersetBuilder<E>._uninitialized();
+    if (comparator != null) {
+      result.withComparator(comparator, isValidElement);
+    } else if (Comparable.compare is Comparator<E>) {
+      result.withComparator(Comparable.compare as Comparator<E>);
+    }
+    return result;
+  }
+
+  SupersetBuilder._uninitialized() {
     if (E == dynamic)
       throw new UnsupportedError('explicit element type required, '
           'for example "new SupersetBuilder<String>"');
@@ -234,17 +242,19 @@ class SupersetBuilder<E>
 
   @override
   Superset<E> build() {
-    if (_lastBuilt == null) {
-      _lastBuilt = new Superset<E>._withOrderedElements(
-          _compare, _isValidElement, new List<E>.unmodifiable(_elements));
-    }
-    return _lastBuilt;
+    _assertInitialized();
+    return _lastBuilt ??=
+        new Superset<E>._withOrderedElements(_comparator, _filter, _elements);
   }
 
   /// As [SetBuilder.replace].
   @override
   void replace(Iterable<Object> iterable) {
-    if (iterable is Superset<E>) {
+    _assertInitialized();
+
+    if (iterable is Superset<E> &&
+        _comparator == iterable._comparator &&
+        _filter == iterable._filter) {
       _elements
         ..clear()
         ..addAll(iterable);
@@ -252,10 +262,10 @@ class SupersetBuilder<E>
       return;
     }
 
-    final elements = new SplayTreeSet<E>(_compare);
+    final elements = new SplayTreeSet<E>(_comparator);
     var count = 0;
     for (final el in iterable) {
-      if (!_checkElement(el))
+      if (!_validElement(el))
         throw new ArgumentError.value(iterable, 'iterable',
             'element $count rejected by `isValidElement`');
       count++;
@@ -269,13 +279,55 @@ class SupersetBuilder<E>
   void update(void updates(SupersetBuilder<E> b)) => updates(this);
 
   /*
+  /// Throws [UnsupportedError].
+  ///
+  /// The superset class stores elements in an ordered list. Use
+  /// `withComparator` to customize element order.
+  @override
+  void withBase(Set<E> base()) => throw new UnsupportedError(
+      "The superset class stores elements in an ordered list. "
+      "Use `withComparator` to customize element order.");
+  */
+
+  /// Throws [UnsupportedError].
+  ///
+  /// The superset class stores elements in an ordered list. Use
+  /// `withComparator` to customize element order.
+  @override
+  void withDefaultBase() => throw new UnsupportedError(
+      "The superset class stores elements in an ordered list. "
+      "Use `withComparator` to customize element order.");
+
+  /// Uses `comparator` as the comparator for all sets created by this builder.
+  /// If `isValidElement` is provided, removes all elements from this builder
+  /// that don't satisfy the filter criterion.
+  void withComparator(Comparator<E> comparator,
+      [bool isValidElement(E element)]) {
+    if (comparator == null) throw new ArgumentError.notNull('comparator');
+
+    final elements = new SplayTreeSet<E>(comparator);
+    if (_initialized) {
+      elements
+        ..addAll(isValidElement == null
+            ? _elements
+            : _elements.where(isValidElement));
+    }
+
+    _comparator = comparator;
+    _filter = isValidElement;
+    _elements = elements;
+    _markAsModified();
+  }
+
+  /*
    * From SetBuilder
    */
 
   /// As [SetBuilder.add].
   @override
   void add(E element) {
-    if (!_checkElement(element))
+    _assertInitialized();
+    if (!_validElement(element))
       throw new ArgumentError.value(element, 'rejected by `isValidElement`');
     _elements.add(element);
     _markAsModified();
@@ -284,9 +336,10 @@ class SupersetBuilder<E>
   /// As [SetBuilder.addAll]. Iterates over `elements` twice.
   @override
   void addAll(Iterable<E> elements) {
+    _assertInitialized();
     var count = 0;
     for (final el in elements) {
-      if (!_checkElement(el))
+      if (!_validElement(el))
         throw new ArgumentError.value(elements, 'iterable',
             'element $count rejected by `isValidElement`');
       count++;
@@ -298,6 +351,7 @@ class SupersetBuilder<E>
   /// As [SetBuilder.clear].
   @override
   void clear() {
+    _assertInitialized();
     _elements.clear();
     _markAsModified();
   }
@@ -313,7 +367,8 @@ class SupersetBuilder<E>
   /// As [SetBuilder.remove].
   @override
   void remove(Object object) {
-    if (!_checkElement(object)) return;
+    _assertInitialized();
+    if (!_validElement(object)) return;
     if (_elements.remove(object)) _markAsModified();
   }
 
@@ -328,6 +383,7 @@ class SupersetBuilder<E>
   /// As [SetBuilder.retainAll].
   @override
   void retainAll(Iterable<Object> elements) {
+    _assertInitialized();
     final lengthBefore = _elements.length;
     _elements.retainAll(elements);
     if (_elements.length != lengthBefore) _markAsModified();
@@ -336,6 +392,7 @@ class SupersetBuilder<E>
   /// As [SetBuilder.retainWhere]. Alias of [SupersetBuilder.where].
   @override
   void retainWhere(bool Function(E) f) {
+    _assertInitialized();
     final lengthBefore = _elements.length;
     _elements.retainWhere(f);
     if (_elements.length != lengthBefore) _markAsModified();
@@ -361,7 +418,18 @@ class SupersetBuilder<E>
   @override
   void where(bool Function(E) f) => retainWhere(f);
 
+  /// As `IndexedSet._validElement`.
+  bool _validElement(Object o) => o is E && (_filter == null || _filter(o));
+
+  /// Must be called whenever [_elements] is modified. Invalidates [_lastBuilt].
   void _markAsModified() => _lastBuilt = null;
+
+  /// Throws a [StateError] if this builder has not been  initialized by
+  /// [withComparator].
+  void _assertInitialized() =>
+      _initialized ||
+      (throw new StateError('This builder has no `comparator`. '
+          'Use `withComparator` to provide one.'));
 }
 
 /// An unmodifiable view of a [Superset] for [Superset.asSet].
@@ -392,7 +460,7 @@ class _UnmodifiableSupersetView<E> extends SetMixin<E>
   E lookup(Object object) => _superset.lookup(object);
 
   @override
-  Set<E> toSet() => new _UnmodifiableSupersetView<E>(_superset);
+  IndexedSet<int, E> toSet() => this;
 
   @override
   E operator [](int i) => _superset[i];

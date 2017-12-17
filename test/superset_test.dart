@@ -1,8 +1,9 @@
 import 'package:test/test.dart';
 import 'package:indexed_set/indexed_set.dart';
+import 'package:built_collection/built_collection.dart';
 
 void main() {
-  group("SupersetBuilder with default `compare` and `isValidElement`:", () {
+  group("SupersetBuilder with default `comparator` and `isValidElement`:", () {
     SupersetBuilder<String> builder;
     setUp(() => builder = new SupersetBuilder<String>());
 
@@ -23,10 +24,35 @@ void main() {
       });
     });
 
+    group("withComparator()", () {
+      test("overrides sort behaviour", () {
+        builder
+          ..withComparator((a, b) => -Comparable.compare(a, b))
+          ..addAll(["a", "b", "c", "d"]);
+        expect(builder.build(), orderedEquals(["d", "c", "b", "a"]));
+      });
+
+      test("reorders already present elements", () {
+        builder
+          ..addAll(["a", "b", "c", "d"])
+          ..withComparator((a, b) => -Comparable.compare(a, b));
+        expect(builder.build(), orderedEquals(["d", "c", "b", "a"]));
+      });
+
+      test("filters already present elements with `isValidElement`", () {
+        builder
+          ..addAll(["a", "aa", "b", "bb"])
+          ..withComparator(
+              (a, b) => -Comparable.compare(a, b), (s) => s.length == 1);
+        expect(builder.build(), orderedEquals(["b", "a"]));
+      });
+    });
+
     group("replace()", () {
       test("replaces the previous contents of the builder", () {
-        builder.add("a");
-        builder.replace(["b", "c"]);
+        builder
+          ..add("a")
+          ..replace(["b", "c"]);
         expect(builder.build(), orderedEquals(["b", "c"]));
       });
 
@@ -70,8 +96,8 @@ void main() {
 
       test("does not mutate the builder if the iterable is invalid", () {
         builder.add("a");
-        expect(
-            () => builder.addAll(["don't add this", 123]), throwsArgumentError);
+        expect(() => builder.addAll(["don't add this", null]),
+            throwsArgumentError);
         expect(builder.build(), orderedEquals(["a"]));
       });
     });
@@ -143,8 +169,9 @@ void main() {
     });
 
     test("removeAll() removes all passed in elements", () {
-      builder.addAll(["a", "b", "c", "d"]);
-      builder.removeAll(["c", "z", null, "d"]);
+      builder
+        ..addAll(["a", "b", "c", "d"])
+        ..removeAll(["c", "z", null, "d"]);
       expect(builder.build(), orderedEquals(["a", "b"]));
     });
 
@@ -204,7 +231,7 @@ void main() {
     });
   });
 
-  group("Superset with default `compare` and `isValidElement`:", () {
+  group("Superset with default `comparator` and `isValidElement`:", () {
     Superset<String> s;
 
     setUp(() => s = new Superset<String>(["a", "b", "c", "d"]));
@@ -256,6 +283,7 @@ void main() {
       });
 
       test("returns false for objects of the wrong type", () {
+        // ignore: iterable_contains_unrelated_type
         expect(s.contains(4), isFalse);
         expect(s.contains(null), isFalse);
       });
@@ -293,41 +321,36 @@ void main() {
           orderedEquals(["a", "b", "c", "d", "z"]));
     });
 
-    test("hashCode is the same for structurally equal supersets", () {
-      final s2 = new Superset<String>(["a", "b", "c", "d"]);
-      expect(s.hashCode, equals(s2.hashCode));
+    group("hashCode", () {
+      test("is the same for Supersets with the same elements", () {
+        expect(s.hashCode,
+            equals(new Superset<String>(["a", "b", "c", "d"]).hashCode));
+      });
+
+      test("is the same for BuiltSets with the same elements", () {
+        expect(s.hashCode,
+            equals(new BuiltSet<String>(["a", "b", "c", "d"]).hashCode));
+      });
     });
 
     group("operator==", () {
-      test("returns true for structurally equal sets", () {
-        final s2 = new Superset<String>(["a", "b", "c", "d"]);
-        expect(s == s2, isTrue);
+      test("returns true for Superset with equal elements", () {
+        expect(s == new Superset<String>(["a", "b", "c", "d"]), isTrue);
       });
 
-      test("returns false for sets with different compare", () {
-        final s2 = new SupersetBuilder<String>(
-            compare: (e1, e2) => e1.length - e2.length)
-          ..addAll(["a", "b", "c", "d"]);
-        expect(s == s2, isFalse);
+      test("returns true for BuiltSet with equal elements", () {
+        expect(s == new BuiltSet<String>(["a", "b", "c", "d"]), isTrue);
       });
 
-      test("returns false for sets with different isValidElement", () {
-        final s2 =
-            new SupersetBuilder<String>(isValidElement: (e) => e.length == 1)
-              ..addAll(["a", "b", "c", "d"]);
-        expect(s == s2, isFalse);
-      });
-
-      test("returns false for sets with different elements", () {
-        final s2 = new Superset<String>(["a", "b", "c", "z"]);
-        expect(s == s2, isFalse);
+      test("returns false for Superset with different elements", () {
+        expect(s == new Superset<String>(["a", "b", "c", "z"]), isFalse);
       });
     });
   });
 
   group("_UnmodifiableSupersetView", () {
-    final Superset<String> s = new Superset<String>(["a", "b", "c", "d"]);
-    final Set<String> view = s.asSet();
+    final s = new Superset<String>(["a", "b", "c", "d"]);
+    final view = s.asSet();
 
     test("contains the same elements as its superset", () {
       expect(view, orderedEquals(s));
