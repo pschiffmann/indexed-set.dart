@@ -200,11 +200,11 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
 class _SubsetIterator<E> implements Iterator<E> {
   final Subset<E> _subset;
 
-  /// The index of [current] in [_subset.superset]. `-1` indicates that the
+  /// The index of [current] in `_subset.superset`. `-1` indicates that the
   /// iterator is uninitialized ([moveNext] was never called).
   int _position = -1;
 
-  /// The value of [_subset._modificationCount] at the time when this iterator
+  /// The value of `_subset._modificationCount` at the time when this iterator
   /// was created. Used to detect and throw on concurrent modifications.
   final int _modificationCount;
 
