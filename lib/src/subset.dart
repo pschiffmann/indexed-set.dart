@@ -42,10 +42,6 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   /// and by [_updateLength].
   int _length;
 
-  /// Is incremented every time this set is changed (by [add] and [remove]).
-  /// Read by [_SubsetIterator] to detect concurrent modifications.
-  int _modificationCount = 0;
-
   @override
   Iterator<E> get iterator => new _SubsetIterator(this);
 
@@ -92,7 +88,6 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
     if (_checkElement(i)) return false;
     _setElement(i);
     _length++;
-    _modificationCount++;
     return true;
   }
 
@@ -103,7 +98,6 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
         _elements[i] |= elements._elements[i];
       }
       _updateLength();
-      _modificationCount++;
     } else {
       super.addAll(elements);
     }
@@ -113,7 +107,6 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   void clear() {
     _elements = new Uint32List(_elements.length);
     _length = 0;
-    _modificationCount++;
   }
 
   @override
@@ -156,7 +149,6 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
     if (i == -1 || !_checkElement(i)) return false;
     _unsetElement(i);
     _length--;
-    _modificationCount++;
     return true;
   }
 
@@ -167,7 +159,6 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
         _elements[i] &= ~elements._elements[i];
       }
       _updateLength();
-      _modificationCount++;
     } else {
       super.removeAll(elements);
     }
@@ -180,7 +171,6 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
         _elements[i] &= elements._elements[i];
       }
       _updateLength();
-      _modificationCount++;
     } else {
       super.retainAll(elements);
     }
@@ -189,6 +179,10 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   @override
   Subset<E> toSet() => new Subset<E>._copy(this);
 
+  /// Exposes the mapping of [superset] for the elements in this set.
+  ///
+  /// Caution: If this set does not contain all elements from it superset, the
+  /// index range will not be contiguous.
   @override
   E operator [](int i) => containsKey(i) ? superset[i] : null;
 
@@ -215,24 +209,16 @@ class _SubsetIterator<E> implements Iterator<E> {
   /// iterator is uninitialized ([moveNext] was never called).
   int _position = -1;
 
-  /// The value of `_subset._modificationCount` at the time when this iterator
-  /// was created. Used to detect and throw on concurrent modifications.
-  final int _modificationCount;
-
   /// Cached [current] object.
   E _current;
 
   @override
   E get current => _current;
 
-  _SubsetIterator(this._subset)
-      : _modificationCount = _subset._modificationCount;
+  _SubsetIterator(this._subset);
 
   @override
   bool moveNext() {
-    if (_modificationCount != _subset._modificationCount) {
-      throw new ConcurrentModificationError(_subset);
-    }
     while (_position + 1 < _subset.superset.length) {
       _position++;
       if (_subset._checkElement(_position)) {
