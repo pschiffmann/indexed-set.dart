@@ -20,6 +20,7 @@ import 'package:indexed_set/indexed_set.dart' show DuplicateIndexException;
 ///       String toString() => '$system-account of $name';
 ///     }
 ///
+///     /// Supports lookup of accounts by username.
 ///     final frontendAccounts = new IndexedSet<String, Account>(
 ///         (Account acc) => acc.name,
 ///         isValidElement: (Account acc) => acc.system == System.frontend);

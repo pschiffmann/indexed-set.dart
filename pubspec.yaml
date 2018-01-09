@@ -1,5 +1,9 @@
 name: indexed_set
-description: Provides an IndexedSet class, an implementation of Set that computes an index for each of its elements, and exposes this mapping through the [] operator.
+version: 1.0.0
+description: >
+  IndexedSet is a Set implementation that computes an index for each of its
+  elements and exposes this mapping through the [] operator. The Superset and
+  Subset classes store a collection of elements as a space-efficient bit vector.
 author: Philipp Schiffmann <philippschiffmann93@gmail.com>
 homepage: https://github.com/pschiffmann/indexed-set.dart
 dependencies:
