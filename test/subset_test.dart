@@ -118,7 +118,7 @@ void main() {
 
       test("creates set containing all elements from superset with filled=true",
           () {
-        expect(new Subset(superset, filled: true), unorderedEquals(superset));
+        expect(new Subset(superset, filled: true), orderedEquals(superset));
       });
     });
 
@@ -193,7 +193,7 @@ void main() {
     });
 
     group("intersection() returns the intersection when called with a", () {
-      test("Hashset", () {
+      test("HashSet", () {
         subset.addAll(vowels);
         final i = subset.intersection(new Set.from(first10));
         expect(i, orderedEquals(intersection));
@@ -239,7 +239,7 @@ void main() {
     });
 
     group("removeAll() removes all elements when called with a", () {
-      test("Hashset", () {
+      test("HashSet", () {
         subset
           ..addAll(vowels)
           ..removeAll(new Set.from(first10));
@@ -277,7 +277,7 @@ void main() {
     test("toSet() creates exact copy", () {
       subset.addAll(vowels);
       final copy = subset.toSet();
-      expect(copy, const isInstanceOf<Subset>());
+      expect(copy, const isInstanceOf<Subset<String>>());
       expect(copy, orderedEquals(subset));
       expect(copy.length, equals(5));
     });

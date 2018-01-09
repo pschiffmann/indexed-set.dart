@@ -1,33 +1,42 @@
 import 'dart:collection' show SetMixin;
-import 'dart:typed_data' show Uint8List;
+import 'dart:typed_data' show Uint32List;
 import 'indexed_set.dart';
 import 'superset.dart';
 
-/// Returns the number of `1` bits in `byte`, which must not be negative.
-int _countBits(int byte) {
-  var count = 0;
-  while (byte > 0) {
-    count += byte & 1;
-    byte >>= 1;
-  }
-  return count;
+/// Number of bits in a single element in `Subset._elements`.
+const int _fieldSize = 32;
+const int _maxUint32 = 0xFFFFFFFF;
+
+/// Returns the number of `1` bits in [n]. [n] must be a non-negative 32-bit
+/// integer.
+///
+/// Implemented with the [HAKMEM algorithm]
+/// (https://stackoverflow.com/q/15233121). Added a `& _maxUint32` in the last
+/// line because [int] can grow larger than 32 bit.
+int hammingWeight(int n) {
+  final c2 = n - ((n >> 1) & 0x55555555);
+  final c4 = (c2 & 0x33333333) + (c2 >> 2 & 0x33333333);
+  final c8 = c4 + (c4 >> 4) & 0x0F0F0F0F;
+  return (c8 * 0x01010101 & _maxUint32) >> 24;
 }
 
 /// A subset only contains elements from its [superset].
 ///
-/// Because the superset is immutable and assigns an index to each of its
-/// elements, this class is very space-efficient, using only 1 bit per element
-/// in the superset. Set operations ([difference], [intersection], [union],
-/// [addAll], [removeAll], [retainAll]) on subsets of the same superset benefit
-/// from this as well.
+/// Because the superset assigns an index to each of its elements, and that
+/// index is constant over time, subsets can store their elements as a bit
+/// vector, where each bit encodes the presence of one element from the
+/// superset. This implementation makes the [Subset] class very space-efficient.
+/// Set operations ([difference], [intersection], [union], [addAll],
+/// [removeAll], [retainAll]) on subsets of the same superset benefit from this
+/// as well.
 class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
-  /// This object dictates which elements this set can store, and provides its
+  /// The superset dictates which elements this set can store, and provides its
   /// [index] and `isValidElement` functions.
   final Superset<E> superset;
 
   /// Each bit in this list indicates the presence (`1`) or absense (`0`) of the
   /// element with the corresponding index in [superset].
-  Uint8List _elements;
+  Uint32List _elements;
 
   /// Cached [length]. Kept in sync with [_elements] by all mutating methods,
   /// and by [_updateLength].
@@ -43,30 +52,31 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   @override
   int get length => _length;
 
-  /// Creates a subset of `superset`.
+  /// Creates a subset of [superset].
   ///
-  /// If `filled` is `true`, the set initially contains all elements from
+  /// If [filled] is `true`, the set initially contains all elements from
   /// `superset`. Else, it is initialized empty.
   Subset(this.superset, {bool filled: false})
-      : _elements = new Uint8List(
-            superset.length ~/ 8 + (superset.length % 8 > 0 ? 1 : 0)),
+      : _elements = new Uint32List(superset.length ~/ _fieldSize +
+            superset.length.remainder(_fieldSize)),
         _length = 0 {
-    if (filled) {
+    if (filled && superset.isNotEmpty) {
       for (var i = 0; i < _elements.length - 1; i++) {
-        _elements[i] = 255;
+        _elements[i] = _maxUint32;
       }
-      if (_elements.isNotEmpty) {
-        // In the last byte, set only the bits to `1` that are actually used
-        // so the unused bits won't be counted by [_updateLength].
-        _elements[_elements.length - 1] = 255 >> (8 - superset.length % 8);
-      }
+
+      // In the last byte, set only the bits to `1` that are actually used
+      // so the unused bits won't be counted by [_updateLength].
+      _elements[_elements.length - 1] =
+          _maxUint32 >> (_fieldSize - superset.length % _fieldSize);
+
       _length = superset.length;
     }
   }
 
   Subset._copy(Subset<E> other)
       : superset = other.superset,
-        _elements = new Uint8List.fromList(other._elements),
+        _elements = new Uint32List.fromList(other._elements),
         _length = other._length;
 
   @override
@@ -101,7 +111,7 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
 
   @override
   void clear() {
-    _elements = new Uint8List(_elements.length);
+    _elements = new Uint32List(_elements.length);
     _length = 0;
     _modificationCount++;
   }
@@ -110,8 +120,7 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   bool contains(Object object) {
     if (object is! E) return false;
     final i = index(object);
-    if (i == -1) return false;
-    return _checkElement(i);
+    return i != -1 && _checkElement(i);
   }
 
   @override
@@ -184,17 +193,19 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   E operator [](int i) => containsKey(i) ? superset[i] : null;
 
   /// Returns [true] if the ith bit in [_elements] is set.
-  bool _checkElement(int i) => _elements[i ~/ 8] & 1 << i % 8 > 0;
+  bool _checkElement(int i) =>
+      _elements[i ~/ _fieldSize] & 1 << i % _fieldSize > 0;
 
   /// Sets the ith bit in [_elements] to `1`.
-  void _setElement(int i) => _elements[i ~/ 8] |= 1 << i % 8;
+  void _setElement(int i) => _elements[i ~/ _fieldSize] |= 1 << i % _fieldSize;
 
   /// Sets the ith bit in [_elements] to `0`.
-  void _unsetElement(int i) => _elements[i ~/ 8] &= ~(1 << i % 8);
+  void _unsetElement(int i) =>
+      _elements[i ~/ _fieldSize] &= ~(1 << i % _fieldSize);
 
   /// Counts the number of set bits in [_elements] and updates [_length].
   void _updateLength() =>
-      _length = _elements.fold(0, (count, byte) => count + _countBits(byte));
+      _length = _elements.fold(0, (count, el) => count + hammingWeight(el));
 }
 
 class _SubsetIterator<E> implements Iterator<E> {
