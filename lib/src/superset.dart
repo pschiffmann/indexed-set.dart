@@ -1,4 +1,5 @@
 import 'dart:collection' show IterableBase, SplayTreeSet, SetMixin;
+
 import 'package:built_collection/built_collection.dart'
     show BuiltList, BuiltSet, SetBuilder;
 import 'package:collection/collection.dart' show binarySearch;
@@ -6,6 +7,7 @@ import 'package:collection/src/unmodifiable_wrappers.dart'
     show UnmodifiableSetMixin;
 import 'package:meta/meta.dart';
 import 'package:quiver/core.dart' show hashObjects;
+
 import 'indexed_set.dart';
 import 'subset.dart';
 
@@ -279,7 +281,6 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   @override
   void update(void updates(SupersetBuilder<E> b)) => updates(this);
 
-  /*
   /// Throws [UnsupportedError].
   ///
   /// The superset class stores elements in an ordered list. Use
@@ -287,9 +288,8 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   @override
   @alwaysThrows
   void withBase(Set<E> base()) => throw new UnsupportedError(
-      "The superset class stores elements in an ordered list. "
-      "Use `withComparator` to customize element order.");
-  */
+      'The superset class stores elements in an ordered list. '
+      'Use `withComparator` to customize element order.');
 
   /// Throws [UnsupportedError].
   ///
@@ -298,8 +298,8 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   @override
   @alwaysThrows
   void withDefaultBase() => throw UnsupportedError(
-      "The superset class stores elements in an ordered list. "
-      "Use `withComparator` to customize element order.");
+      'The superset class stores elements in an ordered list. '
+      'Use `withComparator` to customize element order.');
 
   /// Uses `comparator` as the comparator for all sets created by this builder.
   /// If `isValidElement` is provided, removes all elements from this builder

@@ -1,5 +1,6 @@
 import 'dart:collection' show SetMixin;
 import 'dart:typed_data' show Uint32List;
+
 import 'indexed_set.dart';
 import 'superset.dart';
 
@@ -186,7 +187,7 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   @override
   E operator [](int i) => containsKey(i) ? superset[i] : null;
 
-  /// Returns [true] if the ith bit in [_elements] is set.
+  /// Returns `true` if the ith bit in [_elements] is set.
   bool _checkElement(int i) =>
       _elements[i ~/ _fieldSize] & 1 << i % _fieldSize > 0;
 
