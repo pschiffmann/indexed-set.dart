@@ -1,0 +1,20 @@
+# https://docs.travis-ci.com/user/languages/dart
+language: dart
+dart:
+  - 2.0.0
+  - stable
+
+jobs:
+  include:
+    - name: dartanalyzer
+      script: dartanalyzer --fatal-infos --fatal-warnings .
+    - name: dartfmt
+      script: dartfmt --fix -n --set-exit-if-changed .
+      dart: stable
+    - name: unit tests
+      script: pub run test
+
+# Only building master means that we don't run two builds for each pull request.
+branches:
+  only:
+    - master

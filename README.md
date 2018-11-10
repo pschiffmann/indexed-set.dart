@@ -1,6 +1,8 @@
 Dart indexed set
 ================
 
+[![Build Status](https://travis-ci.com/pschiffmann/indexed-set.dart.svg?branch=master)](https://travis-ci.com/pschiffmann/indexed-set.dart)
+
 This package provides an `IndexedSet` class, and a pair of `Superset`/`Subset` classes that implement the `IndexedSet` interface.
 
 IndexedSet
