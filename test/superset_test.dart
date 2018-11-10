@@ -14,7 +14,7 @@ void main() {
     group('build()', () {
       test('actually builds', () {
         final s = builder.build();
-        expect(s, const isInstanceOf<Superset<String>>());
+        expect(s, const TypeMatcher<Superset<String>>());
       });
 
       test("reuses the same superset if the builder didn't change", () {

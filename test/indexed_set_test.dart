@@ -102,7 +102,7 @@ void main() {
         test(
             'returns set with same behaviour',
             () => expect(
-                s.toSet(), const isInstanceOf<IndexedSet<String, num>>()));
+                s.toSet(), const TypeMatcher<IndexedSet<String, num>>()));
       });
     });
   });
@@ -118,7 +118,7 @@ void main() {
     test('add rejects duplicate indexes', () {
       s.add(1);
       expect(() => s.add(3),
-          throwsA(const isInstanceOf<DuplicateIndexException>()));
+          throwsA(const TypeMatcher<DuplicateIndexException>()));
     });
 
     test('contains differentiates between objects with same index', () {

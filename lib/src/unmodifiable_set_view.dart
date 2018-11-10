@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:collection/src/empty_unmodifiable_set.dart';
+
 import 'indexed_set.dart';
 
 /// An unmodifiable set.
@@ -33,9 +34,12 @@ class UnmodifiableIndexedSetView<I, E> extends UnmodifiableSetView<E>
   IndexedSet<I, E> toSet() => this;
 }
 
-// ignore: non_abstract_class_inherits_abstract_member_one
 class EmptyIndexedSet<I, E> extends EmptyUnmodifiableSet<E>
     implements UnmodifiableIndexedSetView<I, E> {
+  @override
+  IndexedSet<I, E> get _base =>
+      throw UnsupportedError('Unnecessary for a set that is always empty');
+
   final I Function(E) _index;
 
   const EmptyIndexedSet(this._index);

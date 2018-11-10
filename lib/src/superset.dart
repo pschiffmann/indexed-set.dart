@@ -244,6 +244,13 @@ class SupersetBuilder<E> implements SetBuilder<E> {
    */
 
   @override
+  bool get isEmpty => _elements.isEmpty;
+  @override
+  bool get isNotEmpty => _elements.isNotEmpty;
+  @override
+  int get length => _elements.length;
+
+  @override
   Superset<E> build() {
     _assertInitialized();
     return _lastBuilt ??=
@@ -369,10 +376,13 @@ class SupersetBuilder<E> implements SetBuilder<E> {
 
   /// As [SetBuilder.remove].
   @override
-  void remove(Object object) {
+  bool remove(Object object) {
     _assertInitialized();
-    if (!_validElement(object)) return;
-    if (_elements.remove(object)) _markAsModified();
+    if (!_validElement(object) || !_elements.remove(object)) {
+      return false;
+    }
+    _markAsModified();
+    return true;
   }
 
   /// As [SetBuilder.removeAll].

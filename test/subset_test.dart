@@ -209,7 +209,7 @@ void main() {
     test('toSet() creates exact copy', () {
       subset.addAll(vowels);
       final copy = subset.toSet();
-      expect(copy, const isInstanceOf<Subset<String>>());
+      expect(copy, const TypeMatcher<Subset<String>>());
       expect(copy, orderedEquals(subset));
       expect(copy.length, equals(5));
     });
