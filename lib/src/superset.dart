@@ -294,7 +294,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   /// `withComparator` to customize element order.
   @override
   @alwaysThrows
-  void withBase(Set<E> base()) => throw new UnsupportedError(
+  void withBase(Set<E> base()) => throw UnsupportedError(
       'The superset class stores elements in an ordered list. '
       'Use `withComparator` to customize element order.');
 
