@@ -35,4 +35,5 @@ Superset / Subset
 Both `Superset` and `Subset` are indexed sets that use `int` as the index type.
 A Superset is immutable and stores its elements in ascending order -- the first element will have index `0`, the last element index `set.length - 1`.
 A Subset has to be taken from a superset, and can only contain elements that are also contained in the superset.
-This allows the subset to store its elements in a bit vector, which is both very space-efficient, and time-efficient for set operations (difference, intersection, union) on subsets of the same superset.
+
+The idea was that subsets could store their elements in a bit vector, which would be very space-efficient, and time-efficient for set operations (difference, intersection, union) on subsets of the same superset. However, `Subset` is outperformed by a regular `HashSet` in most situations.
