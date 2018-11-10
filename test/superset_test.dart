@@ -5,10 +5,10 @@ import 'package:test/test.dart';
 void main() {
   group('SupersetBuilder with default `comparator` and `isValidElement`:', () {
     SupersetBuilder<String> builder;
-    setUp(() => builder = new SupersetBuilder<String>());
+    setUp(() => builder = SupersetBuilder<String>());
 
     test('throws when instantiated without generic type', () {
-      expect(() => new SupersetBuilder(), throwsUnsupportedError);
+      expect(() => SupersetBuilder(), throwsUnsupportedError);
     });
 
     group('build()', () {
@@ -234,7 +234,7 @@ void main() {
   group('Superset with default `comparator` and `isValidElement`:', () {
     Superset<String> s;
 
-    setUp(() => s = new Superset<String>(['a', 'b', 'c', 'd']));
+    setUp(() => s = Superset<String>(['a', 'b', 'c', 'd']));
 
     test('containsKey() returns true for ints in range 0..length-1', () {
       expect(s.containsKey(-1), isFalse);
@@ -292,14 +292,14 @@ void main() {
     test(
         'difference() returns new superset containing only elements from '
         'this that are not in other', () {
-      expect(s.difference(new Superset<String>(['a', 'c', 'z'])),
+      expect(s.difference(Superset<String>(['a', 'c', 'z'])),
           orderedEquals(['b', 'd']));
     });
 
     test(
         'intersection() returns new superset containing all elements from '
         'this that are also in other', () {
-      expect(s.intersection(new Superset<String>(['a', 'c', 'z'])),
+      expect(s.intersection(Superset<String>(['a', 'c', 'z'])),
           orderedEquals(['a', 'c']));
     });
 
@@ -317,39 +317,39 @@ void main() {
     test(
         'union() returns new superset '
         'containing all elements from this and other', () {
-      expect(s.union(new Superset<String>(['a', 'z'])),
+      expect(s.union(Superset<String>(['a', 'z'])),
           orderedEquals(['a', 'b', 'c', 'd', 'z']));
     });
 
     group('hashCode', () {
       test('is the same for Supersets with the same elements', () {
         expect(s.hashCode,
-            equals(new Superset<String>(['a', 'b', 'c', 'd']).hashCode));
+            equals(Superset<String>(['a', 'b', 'c', 'd']).hashCode));
       });
 
       test('is the same for BuiltSets with the same elements', () {
         expect(s.hashCode,
-            equals(new BuiltSet<String>(['a', 'b', 'c', 'd']).hashCode));
+            equals(BuiltSet<String>(['a', 'b', 'c', 'd']).hashCode));
       });
     });
 
     group('operator==', () {
       test('returns true for Superset with equal elements', () {
-        expect(s == new Superset<String>(['a', 'b', 'c', 'd']), isTrue);
+        expect(s == Superset<String>(['a', 'b', 'c', 'd']), isTrue);
       });
 
       test('returns true for BuiltSet with equal elements', () {
-        expect(s == new BuiltSet<String>(['a', 'b', 'c', 'd']), isTrue);
+        expect(s == BuiltSet<String>(['a', 'b', 'c', 'd']), isTrue);
       });
 
       test('returns false for Superset with different elements', () {
-        expect(s == new Superset<String>(['a', 'b', 'c', 'z']), isFalse);
+        expect(s == Superset<String>(['a', 'b', 'c', 'z']), isFalse);
       });
     });
   });
 
   group('_UnmodifiableSupersetView', () {
-    final s = new Superset<String>(['a', 'b', 'c', 'd']);
+    final s = Superset<String>(['a', 'b', 'c', 'd']);
     final view = s.asSet();
 
     test('contains the same elements as its superset', () {

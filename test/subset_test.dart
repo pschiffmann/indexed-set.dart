@@ -3,8 +3,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('Subset', () {
-    final alphabet = new List.generate(
-        26, (n) => new String.fromCharCode(n + 'A'.codeUnitAt(0)));
+    final alphabet =
+        List.generate(26, (n) => String.fromCharCode(n + 'A'.codeUnitAt(0)));
     final vowels = const ['A', 'E', 'I', 'O', 'U'];
     final first10 = const ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
@@ -26,10 +26,10 @@ void main() {
       'U'
     ];
 
-    final superset = new Superset<String>(alphabet);
+    final superset = Superset<String>(alphabet);
 
     Subset<String> subset;
-    setUp(() => subset = new Subset<String>(superset));
+    setUp(() => subset = Subset<String>(superset));
 
     group('iterator', () {
       test('visits all elements', () {
@@ -50,7 +50,7 @@ void main() {
 
       test('creates set containing all elements from superset with filled=true',
           () {
-        expect(new Subset(superset, filled: true), orderedEquals(superset));
+        expect(Subset(superset, filled: true), orderedEquals(superset));
       });
     });
 
@@ -81,7 +81,7 @@ void main() {
       });
 
       test('Subset', () {
-        subset..addAll(vowels)..addAll(new Subset(superset)..addAll(first10));
+        subset..addAll(vowels)..addAll(Subset(superset)..addAll(first10));
         expect(subset, orderedEquals(union));
         expect(subset.length, equals(union.length));
       });
@@ -127,14 +127,14 @@ void main() {
     group('intersection() returns the intersection when called with a', () {
       test('HashSet', () {
         subset.addAll(vowels);
-        final i = subset.intersection(new Set.from(first10));
+        final i = subset.intersection(Set.from(first10));
         expect(i, orderedEquals(intersection));
         expect(i.length, equals(intersection.length));
       });
 
       test('Subset', () {
         subset.addAll(vowels);
-        final i = subset.intersection(new Subset(superset)..addAll(first10));
+        final i = subset.intersection(Subset(superset)..addAll(first10));
         expect(i, orderedEquals(intersection));
         expect(i.length, equals(intersection.length));
       });
@@ -174,7 +174,7 @@ void main() {
       test('HashSet', () {
         subset
           ..addAll(vowels)
-          ..removeAll(new Set.from(first10));
+          ..removeAll(Set.from(first10));
         expect(subset, orderedEquals(difference));
         expect(subset.length, equals(difference.length));
       });
@@ -182,7 +182,7 @@ void main() {
       test('Subset', () {
         subset
           ..addAll(vowels)
-          ..removeAll(new Subset(superset)..addAll(first10));
+          ..removeAll(Subset(superset)..addAll(first10));
         expect(subset, orderedEquals(difference));
         expect(subset.length, equals(difference.length));
       });
@@ -192,7 +192,7 @@ void main() {
       test('Hashset', () {
         subset
           ..addAll(vowels)
-          ..retainAll(new Set.from(first10));
+          ..retainAll(Set.from(first10));
         expect(subset, orderedEquals(intersection));
         expect(subset.length, equals(intersection.length));
       });
@@ -200,7 +200,7 @@ void main() {
       test('Subset', () {
         subset
           ..addAll(vowels)
-          ..retainAll(new Subset(superset)..addAll(first10));
+          ..retainAll(Subset(superset)..addAll(first10));
         expect(subset, orderedEquals(intersection));
         expect(subset.length, equals(intersection.length));
       });

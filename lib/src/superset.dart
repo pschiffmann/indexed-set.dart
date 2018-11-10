@@ -41,17 +41,17 @@ class Superset<E> extends IterableBase<E> implements BuiltSet<E> {
   /// Creates a Superset with the elements from `iterable` and
   /// [Comparable.compare] as `comparator`.
   factory Superset([Iterable<E> iterable = const []]) =>
-      (new SupersetBuilder<E>()..addAll(iterable)).build();
+      (SupersetBuilder<E>()..addAll(iterable)).build();
 
   /// As [BuiltSet.build].
   factory Superset.build(void updates(SupersetBuilder<E> builder)) =>
-      (new SupersetBuilder<E>()..update(updates)).build();
+      (SupersetBuilder<E>()..update(updates)).build();
 
   /// Assumes the `_elements` argument is ordered according to `_comparator` and
   /// only contains elements allowed by `_isValidElement`.
   Superset._withOrderedElements(
       this._comparator, this._filter, Iterable<E> elements)
-      : _elements = new List<E>.unmodifiable(elements);
+      : _elements = List<E>.unmodifiable(elements);
 
   /*
    * From IndexedSet
@@ -99,7 +99,7 @@ class Superset<E> extends IterableBase<E> implements BuiltSet<E> {
 
   /// As [BuiltSet.asSet].
   @override
-  IndexedSet<int, E> asSet() => new _UnmodifiableSupersetView(this);
+  IndexedSet<int, E> asSet() => _UnmodifiableSupersetView(this);
 
   /// As [BuiltSet.contains].
   @override
@@ -112,14 +112,14 @@ class Superset<E> extends IterableBase<E> implements BuiltSet<E> {
   /// As [BuiltSet.difference]. Uses `comparator` and `isValidElement` of this.
   @override
   Superset<E> difference(BuiltSet<Object> other) =>
-      new Superset<E>._withOrderedElements(
+      Superset<E>._withOrderedElements(
           _comparator, _filter, _elements.where((el) => !other.contains(el)));
 
   /// As [BuiltSet.intersection]. Uses `comparator` and `isValidElement` of
   /// this.
   @override
   Superset<E> intersection(BuiltSet<Object> other) =>
-      new Superset<E>._withOrderedElements(
+      Superset<E>._withOrderedElements(
           _comparator, _filter, _elements.where((el) => other.contains(el)));
 
   /// As [BuiltSet.lookup].
@@ -132,7 +132,7 @@ class Superset<E> extends IterableBase<E> implements BuiltSet<E> {
 
   /// As [BuiltSet.toBuiltList].
   @override
-  BuiltList<E> toBuiltList() => new BuiltList<E>(this);
+  BuiltList<E> toBuiltList() => BuiltList<E>(this);
 
   /// As [BuiltSet.toBuiltSet].
   @override
@@ -142,7 +142,7 @@ class Superset<E> extends IterableBase<E> implements BuiltSet<E> {
   /// this set.
   @override
   SplayTreeSet<E> toSet() =>
-      new SplayTreeSet<E>(_comparator, _filter)..addAll(_elements);
+      SplayTreeSet<E>(_comparator, _filter)..addAll(_elements);
 
   /// As [BuiltSet.union]. Uses `comparator` and `isValidElement` of this.
   ///
@@ -163,7 +163,7 @@ class Superset<E> extends IterableBase<E> implements BuiltSet<E> {
   /// As [BuiltSet.toBuilder].
   @override
   SupersetBuilder<E> toBuilder() =>
-      new SupersetBuilder<E>(_comparator, _filter)..replace(this);
+      SupersetBuilder<E>(_comparator, _filter)..replace(this);
 
   /*
    * Equality and hashCode
@@ -222,7 +222,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   /// objects.
   factory SupersetBuilder(
       [Comparator<E> comparator, bool isValidElement(E element)]) {
-    final result = new SupersetBuilder<E>._uninitialized();
+    final result = SupersetBuilder<E>._uninitialized();
     if (comparator != null) {
       result.withComparator(comparator, isValidElement);
     } else if (Comparable.compare is Comparator<E>) {
@@ -233,7 +233,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
 
   SupersetBuilder._uninitialized() {
     if (E == dynamic)
-      throw new UnsupportedError('explicit element type required, '
+      throw UnsupportedError('explicit element type required, '
           'for example "new SupersetBuilder<String>"');
   }
 
@@ -245,7 +245,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   Superset<E> build() {
     _assertInitialized();
     return _lastBuilt ??=
-        new Superset<E>._withOrderedElements(_comparator, _filter, _elements);
+        Superset<E>._withOrderedElements(_comparator, _filter, _elements);
   }
 
   /// As [SetBuilder.replace].
@@ -263,11 +263,11 @@ class SupersetBuilder<E> implements SetBuilder<E> {
       return;
     }
 
-    final elements = new SplayTreeSet<E>(_comparator);
+    final elements = SplayTreeSet<E>(_comparator);
     var count = 0;
     for (final el in iterable) {
       if (!_validElement(el))
-        throw new ArgumentError.value(iterable, 'iterable',
+        throw ArgumentError.value(iterable, 'iterable',
             'element $count rejected by `isValidElement`');
       count++;
       elements.add(el);
@@ -297,7 +297,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   /// `withComparator` to customize element order.
   @override
   @alwaysThrows
-  void withDefaultBase() => throw new UnsupportedError(
+  void withDefaultBase() => throw UnsupportedError(
       "The superset class stores elements in an ordered list. "
       "Use `withComparator` to customize element order.");
 
@@ -306,9 +306,9 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   /// that don't satisfy the filter criterion.
   void withComparator(Comparator<E> comparator,
       [bool isValidElement(E element)]) {
-    if (comparator == null) throw new ArgumentError.notNull('comparator');
+    if (comparator == null) throw ArgumentError.notNull('comparator');
 
-    final elements = new SplayTreeSet<E>(comparator);
+    final elements = SplayTreeSet<E>(comparator);
     if (_initialized) {
       elements
         ..addAll(isValidElement == null
@@ -331,7 +331,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   void add(E element) {
     _assertInitialized();
     if (!_validElement(element))
-      throw new ArgumentError.value(element, 'rejected by `isValidElement`');
+      throw ArgumentError.value(element, 'rejected by `isValidElement`');
     _elements.add(element);
     _markAsModified();
   }
@@ -343,7 +343,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
     var count = 0;
     for (final el in elements) {
       if (!_validElement(el))
-        throw new ArgumentError.value(elements, 'iterable',
+        throw ArgumentError.value(elements, 'iterable',
             'element $count rejected by `isValidElement`');
       count++;
     }
@@ -431,7 +431,7 @@ class SupersetBuilder<E> implements SetBuilder<E> {
   /// [withComparator].
   void _assertInitialized() =>
       _initialized ||
-      (throw new StateError('This builder has no `comparator`. '
+      (throw StateError('This builder has no `comparator`. '
           'Use `withComparator` to provide one.'));
 }
 

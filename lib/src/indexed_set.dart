@@ -62,8 +62,7 @@ class IndexedSet<I, E> extends SetMixin<E> {
     bool areElementsEqual(E e1, E e2),
     bool isValidElement(E element),
     bool areIndexesEqual(I i1, I i2),
-  })
-      : this.using(index, () => new HashMap<I, E>(equals: areIndexesEqual),
+  }) : this.using(index, () => HashMap<I, E>(equals: areIndexesEqual),
             areElementsEqual: areElementsEqual, isValidElement: isValidElement);
 
   /// Creates an indexed set that uses `base` to store index/element pairs.
@@ -78,15 +77,13 @@ class IndexedSet<I, E> extends SetMixin<E> {
     Map<I, E> Function() base, {
     bool areElementsEqual(E e1, E e2),
     bool isValidElement(E element),
-  })
-      : _index = index,
+  })  : _index = index,
         _comparator = areElementsEqual,
         _filter = isValidElement,
         _values = base(),
         _valuesFactory = base {
     if (_values.isNotEmpty)
-      throw new ArgumentError.value(
-          base, 'base', 'The returned map must be empty');
+      throw ArgumentError.value(base, 'base', 'The returned map must be empty');
   }
 
   /// Returns the element referenced by _index_.
@@ -118,7 +115,7 @@ class IndexedSet<I, E> extends SetMixin<E> {
     }
     if (_elementsEqual(element, _values[i])) return false;
 
-    throw new DuplicateIndexException(i, _values[i], element);
+    throw DuplicateIndexException(i, _values[i], element);
   }
 
   @override
@@ -155,7 +152,7 @@ class IndexedSet<I, E> extends SetMixin<E> {
   }
 
   @override
-  IndexedSet<I, E> toSet() => new IndexedSet.using(index, _valuesFactory,
+  IndexedSet<I, E> toSet() => IndexedSet.using(index, _valuesFactory,
       areElementsEqual: _comparator, isValidElement: _filter)
     .._values.addAll(_values);
 

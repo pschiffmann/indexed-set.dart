@@ -43,7 +43,7 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   int _length;
 
   @override
-  Iterator<E> get iterator => new _SubsetIterator(this);
+  Iterator<E> get iterator => _SubsetIterator(this);
 
   @override
   int get length => _length;
@@ -52,8 +52,8 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   ///
   /// If [filled] is `true`, the set initially contains all elements from
   /// `superset`. Else, it is initialized empty.
-  Subset(this.superset, {bool filled: false})
-      : _elements = new Uint32List(superset.length ~/ _fieldSize +
+  Subset(this.superset, {bool filled = false})
+      : _elements = Uint32List(superset.length ~/ _fieldSize +
             superset.length.remainder(_fieldSize)),
         _length = 0 {
     if (filled && superset.isNotEmpty) {
@@ -72,14 +72,14 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
 
   Subset._copy(Subset<E> other)
       : superset = other.superset,
-        _elements = new Uint32List.fromList(other._elements),
+        _elements = Uint32List.fromList(other._elements),
         _length = other._length;
 
   @override
   bool add(E element) {
     final i = index(element);
     if (i == -1) {
-      throw new ArgumentError.value(
+      throw ArgumentError.value(
           element,
           'element',
           "The element can't be added to this subset "
@@ -105,7 +105,7 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
 
   @override
   void clear() {
-    _elements = new Uint32List(_elements.length);
+    _elements = Uint32List(_elements.length);
     _length = 0;
   }
 
@@ -177,7 +177,7 @@ class Subset<E> extends SetMixin<E> implements IndexedSet<int, E> {
   }
 
   @override
-  Subset<E> toSet() => new Subset<E>._copy(this);
+  Subset<E> toSet() => Subset<E>._copy(this);
 
   /// Exposes the mapping of [superset] for the elements in this set.
   ///

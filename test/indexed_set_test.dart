@@ -9,7 +9,7 @@ void main() {
       () {
     group('with elements [10, 20, 15]:', () {
       IndexedSet<String, num> s;
-      setUp(() => s = new IndexedSet<String, num>((num n) => n.toString())
+      setUp(() => s = IndexedSet<String, num>((num n) => n.toString())
         ..addAll([10, 20, 15]));
 
       test('iterator contains all elements',
@@ -113,7 +113,7 @@ void main() {
 
     IndexedSet<String, int> s;
     setUp(() =>
-        s = new IndexedSet<String, int>(index, isValidElement: isValidElement));
+        s = IndexedSet<String, int>(index, isValidElement: isValidElement));
 
     test('add rejects duplicate indexes', () {
       s.add(1);
@@ -149,9 +149,9 @@ void main() {
 
   group('IndexedSet with underlying `SplayTreeMap`', () {
     IndexedSet<String, int> s;
-    setUp(() => s = new IndexedSet<String, int>.using(
+    setUp(() => s = IndexedSet<String, int>.using(
         (int n) => n.toString(),
-        () => new SplayTreeMap<String, int>(
+        () => SplayTreeMap<String, int>(
             (String s1, String s2) => int.parse(s1).compareTo(int.parse(s2)))));
 
     test('iterates over elements in ascending order', () {
