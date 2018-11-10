@@ -1,5 +1,3 @@
-analyzer:
-  strong-mode: true
 linter:
   rules:
     # errors
@@ -37,8 +35,7 @@ linter:
     - join_return_with_assignment
     - library_names
     - library_prefixes
-    # (2017/12/06): breaks on generic function type syntax
-    # - non_constant_identifier_names
+    - non_constant_identifier_names
     - omit_local_variable_types
     - only_throw_errors
     - overridden_fields
